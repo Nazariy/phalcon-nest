@@ -1,0 +1,137 @@
+version: '3.5'
+networks:
+  phalcon:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.50.0.0/16
+volumes:
+  data-mysql:
+    driver: local
+services:
+  mysql:
+    image: 'library/mysql:8.0'
+    restart: always
+    container_name: '${COMPOSE_PROJECT_NAME}-mysql'
+    working_dir: '${COMPOSE_PROJECT_WORKING_DIR}'
+    command:
+      - '--character-set-server=utf8mb4'
+      - '--bind-address=0.0.0.0'
+      - '--default-authentication-plugin=mysql_native_password'
+    volumes:
+      - '.runtime/mysql/data:/var/lib/mysql'
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      phalcon:
+        ipv4_address: ${MYSQL_HOSTNAME}
+  phalcon3:
+    build:
+      context: ./docker
+      args:
+        - NEST_PHP_VERSION=7.3-apache
+        - NEST_PHALCON_VERSION=3.4.5
+        - NEST_PHALCON_DEVTOOLS_VERSION=3.4.14
+        - NEST_PSR_VERSION=1.2.0
+        - INSTALL_DEVTOOLS=true
+        - INSTALL_NEWRELIC=true
+        - SSL_SUBJECT=/C=CA/ST=QC/O=ACME/CN=localhost
+    restart: unless-stopped
+    container_name: '${COMPOSE_PROJECT_NAME}-apache-phalcon3'
+    working_dir: '${COMPOSE_PROJECT_WORKING_DIR}'
+    environment:
+      - APACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}
+      - APACHE_PUBLIC_DOCUMENT_ROOT=${APACHE_PUBLIC_DOCUMENT_ROOT}
+    depends_on:
+      - mysql
+    volumes:
+      - '.:/home'
+      - './docker/etc/apache2/apache2.conf:/etc/apache2/apache2.conf'
+      - './docker/etc/apache2/sites-available/000-default.conf:/etc/apache2/sites-available/000-default.conf'
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9003:9003"
+    expose:
+      - 80
+      - 443
+      - 9003
+    networks:
+      phalcon:
+        ipv4_address: 172.50.0.3
+  phalcon4:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+      args:
+        - NEST_PHP_VERSION=7.4-apache
+        - NEST_PHALCON_VERSION=4.1.3
+        - NEST_PHALCON_DEVTOOLS_VERSION=4.20.0
+        - NEST_PSR_VERSION=1.2.0
+        - INSTALL_DEVTOOLS=true
+        - INSTALL_NEWRELIC=true
+        - SSL_SUBJECT=/C=CA/ST=QC/O=ACME/CN=localhost
+    restart: unless-stopped
+    container_name: '${COMPOSE_PROJECT_NAME}apache-phalcon4'
+    working_dir: '${COMPOSE_PROJECT_WORKING_DIR}'
+    environment:
+      - APACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}
+      - APACHE_PUBLIC_DOCUMENT_ROOT=${APACHE_PUBLIC_DOCUMENT_ROOT}
+    depends_on:
+      - mysql
+    volumes:
+      - '.:/home'
+      - './docker/etc/apache2/apache2.conf:/etc/apache2/apache2.conf'
+      - './docker/etc/apache2/sites-available/000-default.conf:/etc/apache2/sites-available/000-default.conf'
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9003:9003"
+    expose:
+      - 80
+      - 443
+      - 9003
+    networks:
+      phalcon:
+        ipv4_address: 172.50.0.4
+  phalcon5:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+      args:
+        - NEST_PHP_VERSION=8.0-apache
+        - NEST_PHALCON_VERSION=5.0.0beta2
+        - NEST_PHALCON_DEVTOOLS_VERSION=4.20.0 #not compatible yet
+        - NEST_PSR_VERSION=1.2.0
+        - PHALCON_EXT_PATH=phalcon
+        - INSTALL_DEVTOOLS=false # not compatible yet
+        - INSTALL_NEWRELIC=true
+        - SSL_SUBJECT=/C=CA/ST=QC/O=ACME/CN=localhost
+    restart: unless-stopped
+    container_name: '${COMPOSE_PROJECT_NAME}apache-phalcon5'
+    working_dir: '${COMPOSE_PROJECT_WORKING_DIR}'
+    environment:
+      - APACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}
+      - APACHE_PUBLIC_DOCUMENT_ROOT=${APACHE_PUBLIC_DOCUMENT_ROOT}
+    depends_on:
+      - mysql
+    volumes:
+      - '.:/home'
+      - './docker/etc/apache2/apache2.conf:/etc/apache2/apache2.conf'
+      - './docker/etc/apache2/sites-available/000-default.conf:/etc/apache2/sites-available/000-default.conf'
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9003:9003"
+    expose:
+      - 80
+      - 443
+      - 9003
+    networks:
+      phalcon:
+        ipv4_address: 172.50.0.5
